@@ -83,11 +83,12 @@ class ResNet(nn.Module):
         return self.classifier(out)
 
 
-model = ResNet(1, len(class_labels))
-model.load_state_dict(model_state)
 
-cap = cv2.VideoCapture(0)
 def emotiv():
+    model = ResNet(1, len(class_labels))
+    model.load_state_dict(model_state)
+
+    cap = cv2.VideoCapture(0)
     while True:
         # Grab a single frame of video
         ret, frame = cap.read()

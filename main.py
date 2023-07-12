@@ -27,7 +27,7 @@ if __name__ == '__main__':
         client.admin.command('ping')
         print('Connected successfully!')
         db = client.sample_guides
-        coll = db.comets
+        coll = db.data
         while True:
             x=read_Data("sample_guides","comets")
             if x!=None:

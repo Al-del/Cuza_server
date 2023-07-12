@@ -1,65 +1,70 @@
-import os
-
-import torch
-import torch.nn as nn
-from torchvision import datasets
-from torchvision.transforms import ToTensor
-from PIL import Image
+import tensorflow as tf
+import keras.datasets.mnist as ms
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from cv2 import (VideoCapture, namedWindow, imshow, waitKey, destroyWindow, imwrite)
-class F_MINIST_CNN(nn.Module):
-    def __init__(self,input_size, output_size,hidden_layers):
-        super().__init__()
-        self.layer_1_CNN=nn.Sequential(
-            nn.Conv2d(in_channels=input_size, out_channels=hidden_layers, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.BatchNorm2d(hidden_layers),
-            nn.Dropout(0.25)
-        )
-        self.layer_2_CNN=nn.Sequential(
-            nn.Conv2d(in_channels=hidden_layers, out_channels=hidden_layers*2, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.BatchNorm2d(hidden_layers*2),
-            nn.Dropout(0.25)
-        )
-        self.classifier=nn.Sequential(
-            nn.Linear(hidden_layers*2*7*7, hidden_layers*2),
-            nn.ReLU(),
-            nn.Dropout(0.25),
-            nn.Linear(hidden_layers*2, output_size)
-        )
-    def forward(self, x):
-        x=self.layer_1_CNN(x)
-        x=self.layer_2_CNN(x)
-        x=x.view(x.size(0), -1)
-        x=self.classifier(x)
-        return x
-#Load the model
-model=F_MINIST_CNN(input_size=1, output_size=10, hidden_layers=32)
-model.load_state_dict(torch.load("model.pth"))
-model.eval()
-class_names=['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
-test_data=datasets.FashionMNIST(
-    root="data",
-    train=False,
-    download=True,
-    transform=ToTensor()
-)
+import os
+from cv2 import *
 
+# Give to me the fashion mnist dataset
 def clothes():
+    (x_train, y_train), (x_test, y_test) = ms.load_data()
+    # Normalize the data
+    x_train = tf.keras.utils.normalize(x_train, axis=1)
+    x_test = tf.keras.utils.normalize(x_test, axis=1)
+    # make class names
+    class_names = ['Bag', 'Trouser', 'Pullover', 'Dress', 'Coat',
+                   'Sandal', 'Shirt', 'Sneaker', 'T-shirt/top', 'Ankle boot']
 
-    model=F_MINIST_CNN(input_size=1, output_size=10, hidden_layers=32)
-    model.load_state_dict(torch.load("model.pth"))
-    model.eval()
-    class_names=['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
+    # Create the model
+    # Load model
+    model = tf.keras.models.load_model('epic_num_reader.model.h5')
+
+    def make_img():
+        # I will get the path of the haine.py file
+        path = os.path.dirname(os.path.realpath(__file__))
+        # I will get the path of the image
+        imgpath = os.path.join(path, '\test.jpg')
+        print(path)
+
+        # I will load the image
+        img = cv2.imread(imgpath)
+        # I will convert the image to grayscale
+        if img is not None:
+            # do image processing here
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            print("Image not loaded successfully")
+        # I will show the image
+        plt.imshow(gray, cmap='gray')
+        # I will resize the image
+        resized = cv2.resize(gray, (28, 28), interpolation=cv2.INTER_AREA)
+        # I will show the image
+        plt.imshow(resized, cmap='gray')
+        # I will normalize the image
+        newimg = tf.keras.utils.normalize(resized, axis=1)
+        # I will show the image
+        plt.imshow(newimg, cmap='gray')
+        # I will make a prediction
+        predictions = model.predict(np.array([newimg]))
+        # I will print the prediction
+        print(np.argmax(predictions))
+
+    # program to capture single image from webcam in python
+
+    # importing OpenCV library
+
+
+    # initialize the camera
+    # If you have multiple camera connected with
+    # current device, assign a value in cam_port
+    # variable according to that
     cam_port = 0
-    cam = VideoCapture(cam_port)
+    cam = cv2.VideoCapture(cam_port)
 
     # reading the input using the camera
-    result, image = cam.read()
+    result, img = cam.read()
 
     # If image will detected without any error,
     # show result
@@ -67,32 +72,28 @@ def clothes():
 
         # showing result, it take frame name and image
         # output
-        imshow("Haina", image)
-
-        # saving image in local storage
-        imwrite("test.jpg", image)
-
-        # If keyboard interrupt occurs, destroy image
-        # window
-        destroyWindow("Haina")
+        if img is not None:
+            # do image processing here
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            print("Image not loaded successfully")
+        # I will show the image
+        plt.imshow(gray, cmap='gray')
+        # I will resize the image
+        resized = cv2.resize(gray, (28, 28), interpolation=cv2.INTER_AREA)
+        # I will show the image
+        plt.imshow(resized, cmap='gray')
+        # I will normalize the image
+        newimg = tf.keras.utils.normalize(resized, axis=1)
+        # I will show the image
+        plt.imshow(newimg, cmap='gray')
+        # I will make a prediction
+        predictions = model.predict(np.array([newimg]))
+        plt.show()
+        # I will print the prediction
+        print(class_names[np.argmax(predictions)])
+        return class_names[np.argmax(predictions)]
 
     # If captured image is corrupted, moving to else part
     else:
         print("No image detected. Please! try again")
-    print("Image saved")
-    img=Image.open("test.jpg")
-    print("well idk")
-    img=img.convert("L")
-    img=img.resize((28,28))
-    img=np.array(img)
-    plt.imshow(img, cmap="gray")
-    plt.show()
-    #turn the photo to tensor
-    img_tensor=ToTensor()(img)
-    img_tensor=img_tensor.unsqueeze(0)
-    #predict the class
-    y_pred=model(img_tensor)
-    print(y_pred.argmax(dim=1))
-    print(class_names[y_pred.argmax(dim=1)])
-    os.remove("test.jpg")
-clothes()

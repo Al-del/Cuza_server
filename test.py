@@ -1,81 +1,96 @@
-from pymongo.mongo_client import MongoClient
-from playsound import playsound
-uri = "mongodb+srv://Cuza:FvcsS3QJWzhGKRkk@cuza.yuiityt.mongodb.net/?retryWrites=true&w=majority"
-# Create a new client and connect to the server
-client = MongoClient(uri)
-# Send a ping to confirm a successful connection
-def inser_data(data):
-    db = client.sample_guides
-    coll = db.comets
-    result = coll.insert_many(data)
-def read_Data(database_name, collection_name):
-    db = client[database_name]
-    col = db[collection_name]
-    # Collection Name
-    x = col.find_one()
-    return x
-def delete_data(database_name, collection_name):
-    mydb = client[database_name]
-    mycol = mydb[collection_name]
-
-    x = mycol.delete_many({})
-
-    print(x.deleted_count, " documents deleted.")
+import tensorflow as tf
+import keras.datasets.mnist as ms
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+#Give to me the fashion mnist dataset
 def clothes():
-    try:
-        client.admin.command('ping')
-        print('Connected successfully!')
-        db = client.sample_guides
-        coll = db.comets
-        inser_data([{"code": 1}] )
+    (x_train, y_train), (x_test, y_test) = ms.load_data()
+    #Normalize the data
+    x_train = tf.keras.utils.normalize(x_train, axis=1)
+    x_test = tf.keras.utils.normalize(x_test, axis=1)
+    #make class names
+    class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+    'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+    #Create the model
+    #Load model
+    model = tf.keras.models.load_model('epic_num_reader.model.h5')
 
-    except Exception as e:
-        print(e)
-def emotions():
-    try:
-        client.admin.command('ping')
-        print('Connected successfully!')
-        db = client.sample_guides
-        coll = db.comets
-        inser_data([{"code": 2}] )
+    def make_img():
+        #I will get the path of the haine.py file
+        path = os.path.dirname(os.path.realpath(__file__))
+        #I will get the path of the image
+        imgpath = os.path.join(path, '\test.jpg')
+        print(path)
 
-    except Exception as e:
-        print(e)
-def emotions():
-     try:
-        client.admin.command('ping')
-        print('Connected successfully!')
-        inser_data([{"code":2}])
-        while True:
-            x=read_Data("sample_guides","data")
-            if x!=None:
-                if x['emotiom']=="Happy":
-                    delete_data("sample_guides","data")
-                    delete_data("sample_guides","comets")
-                    return "You are doing well!"
+        #I will load the image
+        img = cv2.imread(imgpath)
+        #I will convert the image to grayscale
+        if img is not None:
+            # do image processing here
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            print("Image not loaded successfully")
+        #I will show the image
+        plt.imshow(gray, cmap='gray')
+        #I will resize the image
+        resized = cv2.resize(gray, (28, 28), interpolation=cv2.INTER_AREA)
+        #I will show the image
+        plt.imshow(resized, cmap='gray')
+        #I will normalize the image
+        newimg = tf.keras.utils.normalize(resized, axis=1)
+        #I will show the image
+        plt.imshow(newimg, cmap='gray')
+        #I will make a prediction
+        predictions = model.predict(np.array([newimg]))
+        #I will print the prediction
+        print(np.argmax(predictions))
 
-                elif x['emotiom']=="Angry":
-                    delete_data("sample_guides","data")
-                    delete_data("sample_guides","comets")
-                    return "CAlm down!"
-                elif x['emotiom']=="Sad":
-                    delete_data("sample_guides","data")
-                    delete_data("sample_guides","comets")
-                    return "there will be better times"
 
-     except Exception as e:
-        print(e)
-def clothes():
-    try:
-        client.admin.command('ping')
-        print('Connected successfully!')
-        inser_data([{"code": 1}])
-        while True:
-            x = read_Data("sample_guides", "data")
-            if x != None:
-                delete_data("sample_guides", "data")
-                delete_data("sample_guides", "comets")
-                return x['clothes']
+    # program to capture single image from webcam in python
 
-    except Exception as e:
-        print(e)
+    # importing OpenCV library
+    from cv2 import *
+
+    # initialize the camera
+    # If you have multiple camera connected with
+    # current device, assign a value in cam_port
+    # variable according to that
+    cam_port = 0
+    cam = cv2.VideoCapture(cam_port)
+
+    # reading the input using the camera
+    result, img = cam.read()
+
+    # If image will detected without any error,
+    # show result
+    if result:
+
+        # showing result, it take frame name and image
+        # output
+        if img is not None:
+            # do image processing here
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            print("Image not loaded successfully")
+        #I will show the image
+        plt.imshow(gray, cmap='gray')
+        #I will resize the image
+        resized = cv2.resize(gray, (28, 28), interpolation=cv2.INTER_AREA)
+        #I will show the image
+        plt.imshow(resized, cmap='gray')
+        #I will normalize the image
+        newimg = tf.keras.utils.normalize(resized, axis=1)
+        #I will show the image
+        plt.imshow(newimg, cmap='gray')
+        #I will make a prediction
+        predictions = model.predict(np.array([newimg]))
+        plt.show()
+        #I will print the prediction
+        print(class_names[np.argmax(predictions)])
+        return class_names[np.argmax(predictions)]
+
+    # If captured image is corrupted, moving to else part
+    else:
+        print("No image detected. Please! try again")
